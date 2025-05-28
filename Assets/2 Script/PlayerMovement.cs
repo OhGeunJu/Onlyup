@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
@@ -14,11 +15,14 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;
     private Transform cameraTransform;
 
+    private PlayerClimb climb;
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         cameraTransform = Camera.main.transform;
+        climb = GetComponent<PlayerClimb>();
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -42,6 +46,7 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 camForward = cameraTransform.forward;
             Vector3 camRight = cameraTransform.right;
+            
             camForward.y = 0f;
             camRight.y = 0f;
             camForward.Normalize();
@@ -57,6 +62,11 @@ public class PlayerMovement : MonoBehaviour
         if (controller.isGrounded)
         {
             yVelocity = -1f;
+
+            if(climb.isClimbing)
+            {
+                return;
+            }
 
             if (Input.GetButtonDown("Jump"))
             {
@@ -86,4 +96,24 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("Walking", isWalking && !isRunning);
         animator.SetBool("Running", isRunning);
     }
+
+    void LateUpdate()
+    {
+        if (cameraTransform == null) return;
+
+        if (!Input.GetKey(KeyCode.LeftAlt))
+        {
+            Vector3 camForward = cameraTransform.forward;
+            camForward.y = 0f;
+
+            if (camForward.sqrMagnitude < 0.01f)
+                return; // 너무 위나 아래를 바라볼 때 회전 안 함
+
+            camForward.Normalize();
+
+            Quaternion targetRotation = Quaternion.LookRotation(camForward);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+        }
+    }
+
 }
