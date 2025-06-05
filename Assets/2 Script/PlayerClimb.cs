@@ -3,21 +3,23 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerClimb : MonoBehaviour
 {
-    public float climbCheckDistance = 1.0f;
+    [SerializeField] private float climbCheckDistance = 1.0f;
+    [SerializeField] private float maxClimbHeight = 2.3f;
     public LayerMask climbableLayer;
-    private PlayerMovement movement;
 
     private CharacterController controller;
     private Animator animator;
+    private PlayerMovement movement;
+    private StandUpHandler standUpHandler;
 
     public bool isClimbing { get; private set; }
-    private bool isStandingUp = false;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
         animator = GetComponentInChildren<Animator>();
         movement = GetComponent<PlayerMovement>();
+        standUpHandler = GetComponent<StandUpHandler>();
     }
 
     void Update()
@@ -29,30 +31,16 @@ public class PlayerClimb : MonoBehaviour
             if (state.IsName("Climbing") && state.normalizedTime >= 0.95f)
             {
                 isClimbing = false;
-                isStandingUp = true;
-
                 animator.ResetTrigger("Climbing");
-                animator.SetTrigger("StandUp");
-                animator.applyRootMotion = true;
+
+                standUpHandler.BeginStandUp();
             }
+
             return;
         }
 
-        if (isStandingUp)
+        if (standUpHandler != null && standUpHandler.IsStandingUp)
         {
-            if (state.IsName("StandUp") && state.normalizedTime >= 0.95f)
-            {
-                isStandingUp = false;
-                animator.ResetTrigger("StandUp");
-
-                animator.applyRootMotion = false;
-                controller.enabled = true;
-
-                if (movement != null)
-                {
-                    movement.NotifyClimbFinished();
-                }
-            }
             return;
         }
 
@@ -60,7 +48,17 @@ public class PlayerClimb : MonoBehaviour
         {
             if (CheckForClimbable(out RaycastHit hit))
             {
-                StartClimb(hit);
+                float ledgeY = hit.collider.bounds.max.y;
+                float characterY = transform.position.y;
+
+                if ((ledgeY - characterY) <= maxClimbHeight)
+                {
+                    StartClimb(hit);
+                }
+                else
+                {
+                    Debug.Log("너무 높아서 등반 불가");
+                }
             }
         }
     }

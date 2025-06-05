@@ -14,6 +14,7 @@ public class PlayerMovement : MonoBehaviour
     private Animator animator;
     private Transform cameraTransform;
     private PlayerClimb climb;
+    private StandUpHandler standUpHandler;
 
     private bool justFinishedClimb = false;
 
@@ -25,6 +26,7 @@ public class PlayerMovement : MonoBehaviour
         climb = GetComponent<PlayerClimb>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        standUpHandler = GetComponent<StandUpHandler>();
     }
 
     void Update()
@@ -36,6 +38,7 @@ public class PlayerMovement : MonoBehaviour
             animator.SetBool("Running", false);
             return;
         }
+
 
         float h = Input.GetAxisRaw("Horizontal");
         float v = Input.GetAxisRaw("Vertical");
