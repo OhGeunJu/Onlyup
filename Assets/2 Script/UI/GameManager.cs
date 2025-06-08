@@ -1,19 +1,14 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public GameObject clearPanel;
-    public GameObject fadeScreen;
-    public GameObject animationPlayer;
+    public GameTimer Timer { get; private set; }
 
     void Awake()
     {
-        // 싱글톤 설정
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -21,37 +16,37 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject); // 필요하면 유지
+        DontDestroyOnLoad(gameObject);
+
+        Timer = GetComponent<GameTimer>();
+        SceneManager.sceneLoaded += OnSceneLoaded; // 씬 로드 시 자동 연결
     }
 
-    void Start()
+    void Update()
     {
-        HideClearPanel();
-        ShowFadeScreen();
-        HideAnimationPlayer();
+        if (Input.GetKeyDown(KeyCode.Y))
+        {
+            if (Timer != null)
+                PlayerPrefs.SetFloat("CurrentTime", Timer.CurrentTime);
+
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 
-    public void ShowClearPanel()
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (clearPanel != null)
-            clearPanel.SetActive(true);
+        // 타이머 UI도 재연결
+        if (Timer != null)
+        {
+            GameObject timerObj = GameObject.Find("Timer");
+            if (timerObj != null)
+            {
+                Timer.timerText = timerObj.GetComponent<TMPro.TextMeshProUGUI>();
+                timerObj.SetActive(true);
+            }
+
+            Timer.ResetTimer(); // 시간은 유지한 채 다시 실행
+        }
     }
 
-    public void HideClearPanel()
-    {
-        if (clearPanel != null)
-            clearPanel.SetActive(false);
-    }
-
-    public void ShowFadeScreen()
-    {
-        if (fadeScreen != null)
-            fadeScreen.SetActive(true);
-    }
-
-    public void HideAnimationPlayer()
-    {
-        if (animationPlayer != null)
-            animationPlayer.SetActive(false);
-    }
 }

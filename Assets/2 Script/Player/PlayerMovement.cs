@@ -76,7 +76,6 @@ public class PlayerMovement : MonoBehaviour
 
             if (Input.GetButtonDown("Jump"))
             {
-                Debug.Log("[JumpInput] 점프 입력 감지");
 
                 if (isRunning)
                 {

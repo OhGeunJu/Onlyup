@@ -4,15 +4,36 @@ using TMPro;
 public class GameTimer : MonoBehaviour
 {
     public TextMeshProUGUI timerText;
+
     private float timeElapsed;
     private bool isRunning = true;
+
+    public float CurrentTime => timeElapsed;
+
+    void Awake()
+    {
+        PlayerPrefs.DeleteKey("CurrentTime"); // 게임 시작 시 초기화
+    }
+    void Start()
+    {
+        timeElapsed = PlayerPrefs.GetFloat("CurrentTime", 0f);
+    }
 
     void Update()
     {
         if (!isRunning) return;
 
         timeElapsed += Time.deltaTime;
-        timerText.text = FormatTime(timeElapsed);
+
+        if (timerText != null)
+            timerText.text = FormatTime(timeElapsed);
+    }
+
+    public void StopTimer() => isRunning = false;
+
+    public void ResetTimer()
+    {
+        isRunning = true;
     }
 
     string FormatTime(float time)
@@ -22,17 +43,6 @@ public class GameTimer : MonoBehaviour
         int seconds = Mathf.FloorToInt(time % 60f);
         int hundredths = Mathf.FloorToInt((time * 100) % 100);
 
-        return string.Format("{0:00}:{1:00}:{2:00}.{3:00}", hours, minutes, seconds, hundredths);
-    }
-
-
-    public float GetTime() => timeElapsed;
-
-    public void StopTimer() => isRunning = false;
-
-    public void ResetTimer()
-    {
-        timeElapsed = 0f;
-        isRunning = true;
+        return $"{hours:00}:{minutes:00}:{seconds:00}.{hundredths:00}";
     }
 }

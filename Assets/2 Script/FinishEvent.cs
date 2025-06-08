@@ -4,41 +4,38 @@ using UnityEngine.Playables;
 public class FinishEvent : MonoBehaviour
 {
     public PlayableDirector timelineDirector;
-    public GameObject playerObject;        // 플레이어 오브젝트
-    public GameObject animationPlayer;      // 오브젝트 애니메이션
-    public GameTimer gameTimer;           // 타이머 스크립트
-    public GameObject timerTextObject;    // 타이머 UI 텍스트 (ex: TextMeshProUGUI가 붙은 오브젝트)
+    public GameObject playerObject;
+    public GameObject animationPlayer;
+    public GameObject timerTextObject;
+
+    private bool hasTriggered = false; // 트리거 중복 방지용
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        // 이미 실행됐거나, 플레이어가 아닌 경우 무시
+        if (hasTriggered || !other.CompareTag("Player")) return;
+
+        hasTriggered = true; // 더 이상 실행되지 않도록 플래그 설정
+
+        if (timelineDirector != null && timelineDirector.state != PlayState.Playing)
         {
-            if (timelineDirector != null && timelineDirector.state != PlayState.Playing)
+            timelineDirector.Play();
+
+            if (playerObject != null)
+                playerObject.SetActive(false);
+
+            if (animationPlayer != null)
+                animationPlayer.SetActive(true);
+
+            if (GameManager.Instance != null && GameManager.Instance.Timer != null)
             {
-                timelineDirector.Play();
-
-                // 1. 플레이어 비활성화
-                if (playerObject != null)
-                    playerObject.SetActive(false);
-
-                // 2. 애니메이션 플레이어 활성화
-                if (animationPlayer != null)
-                {
-                    animationPlayer.SetActive(true);
-                }
-
-                // 3. 타이머 멈추고 저장
-                if (gameTimer != null)
-                {
-                    gameTimer.StopTimer();
-                    float finalTime = gameTimer.GetTime();
-                    PlayerPrefs.SetFloat("ClearTime", finalTime);
-                }
-
-                // 4. 타이머 UI 숨기기
-                if (timerTextObject != null)
-                    timerTextObject.SetActive(false);
+                GameManager.Instance.Timer.StopTimer();
+                float finalTime = GameManager.Instance.Timer.CurrentTime;
+                PlayerPrefs.SetFloat("ClearTime", finalTime);
             }
+
+            if (timerTextObject != null)
+                timerTextObject.SetActive(false);
         }
     }
 }
